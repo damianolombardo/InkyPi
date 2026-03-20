@@ -182,39 +182,65 @@
         const $detectLocation = document.querySelector('#detectLocation');
         const $detectStatus = document.querySelector('#detectLocationStatus');
 
-        $detectLocation.addEventListener('click', () => {
-            if (!navigator.geolocation) {
-                $detectStatus.textContent = 'Geolocation not supported by this browser.';
-                return;
+        function applyDetectedLocation(lat, lng, source) {
+            $latitude.value = lat;
+            $longitude.value = lng;
+            latitude = lat;
+            longitude = lng;
+            if (map && marker) {
+                marker.setLatLng([lat, lng]);
+                map.setView([lat, lng], 10);
             }
-            $detectStatus.textContent = 'Detecting...';
-            $detectLocation.disabled = true;
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const lat = parseFloat(position.coords.latitude.toFixed(6));
-                    const lng = parseFloat(position.coords.longitude.toFixed(6));
-                    $latitude.value = lat;
-                    $longitude.value = lng;
-                    latitude = lat;
-                    longitude = lng;
-                    // Update map marker if the map is already open
-                    if (map && marker) {
-                        marker.setLatLng([lat, lng]);
-                        map.setView([lat, lng], 10);
+            $detectStatus.textContent = 'Location detected' + (source ? ' (' + source + ')' : '') + '!';
+            $detectLocation.disabled = false;
+        }
+
+        function detectViaIP() {
+            $detectStatus.textContent = 'Detecting via IP...';
+            fetch('https://ipapi.co/json/')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.latitude && data.longitude) {
+                        applyDetectedLocation(
+                            parseFloat(data.latitude.toFixed(6)),
+                            parseFloat(data.longitude.toFixed(6)),
+                            'IP'
+                        );
+                    } else {
+                        $detectStatus.textContent = 'Could not detect location.';
+                        $detectLocation.disabled = false;
                     }
-                    $detectStatus.textContent = 'Location detected!';
+                })
+                .catch(() => {
+                    $detectStatus.textContent = 'Could not detect location.';
                     $detectLocation.disabled = false;
-                },
-                (error) => {
-                    const messages = {
-                        1: 'Permission denied. Please allow location access.',
-                        2: 'Position unavailable.',
-                        3: 'Request timed out.',
-                    };
-                    $detectStatus.textContent = messages[error.code] || 'Could not detect location.';
-                    $detectLocation.disabled = false;
-                }
-            );
+                });
+        }
+
+        $detectLocation.addEventListener('click', () => {
+            $detectStatus.textContent = '';
+            $detectLocation.disabled = true;
+
+            if (navigator.geolocation && window.isSecureContext) {
+                $detectStatus.textContent = 'Detecting...';
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        applyDetectedLocation(
+                            parseFloat(position.coords.latitude.toFixed(6)),
+                            parseFloat(position.coords.longitude.toFixed(6)),
+                            'GPS'
+                        );
+                    },
+                    () => {
+                        // Permission denied or unavailable — fall back to IP
+                        detectViaIP();
+                    },
+                    { timeout: 8000 }
+                );
+            } else {
+                // HTTP context — use IP geolocation directly
+                detectViaIP();
+            }
         });
 
         $openMap.addEventListener('click', () => {
