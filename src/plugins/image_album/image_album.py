@@ -17,9 +17,10 @@ class ImmichProvider:
         self.image_loader = image_loader
         self.session = get_http_session()
 
-    def get_album_id(self, album: str) -> str:
+    def get_album_id(self, album: str, shared: bool = False) -> str:
         logger.debug(f"Fetching albums from {self.base_url}")
-        r = self.session.get(f"{self.base_url}/api/albums", headers=self.headers)
+        params = {"shared": "true"} if shared else {}
+        r = self.session.get(f"{self.base_url}/api/albums", headers=self.headers, params=params)
         r.raise_for_status()
         albums = r.json()
 
@@ -53,7 +54,7 @@ class ImmichProvider:
         logger.debug(f"Found {len(all_items)} total assets in album")
         return all_items
 
-    def get_image(self, album: str, dimensions: tuple[int, int], resize: bool = True) -> Image.Image | None:
+    def get_image(self, album: str, dimensions: tuple[int, int], resize: bool = True, shared: bool = False) -> Image.Image | None:
         """
         Get a random image from the album.
 
@@ -61,13 +62,14 @@ class ImmichProvider:
             album: Album name
             dimensions: Target dimensions (width, height)
             resize: Whether to let loader resize (False when padding will be applied)
+            shared: Whether to look in shared libraries
 
         Returns:
             PIL Image or None on error
         """
         try:
             logger.info(f"Getting id for album '{album}'")
-            album_id = self.get_album_id(album)
+            album_id = self.get_album_id(album, shared=shared)
             logger.info(f"Getting assets from album id {album_id}")
             assets = self.get_assets(album_id)
 
@@ -154,9 +156,10 @@ class ImageAlbum(BasePlugin):
                 logger.info(f"Immich URL: {url}")
                 logger.info(f"Album: {album}")
 
+                shared = settings.get('shared') == 'true'
                 provider = ImmichProvider(url, key, self.image_loader)
                 # Let loader resize when no padding needed, otherwise load full-size for padding
-                img = provider.get_image(album, dimensions, resize=not use_padding)
+                img = provider.get_image(album, dimensions, resize=not use_padding, shared=shared)
 
                 if not img:
                     logger.error("Failed to retrieve image from Immich")

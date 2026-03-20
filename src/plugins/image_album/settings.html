@@ -10,6 +10,14 @@
     <input type="text" id="url" name="url" placeholder="Type something..." required class="form-input">
      <label for="album" class="form-label">Album Name:</label>
     <input type="text" id="album" name="album" placeholder="Type something..." required class="form-input">
+    <div class="form-group">
+        <label for="shared" class="form-label">Shared Library:</label>
+        <div class="toggle-container">
+            <input type="checkbox" id="shared" name="shared" class="toggle-checkbox" value="false"
+                onclick="this.value = this.checked ? 'true' : 'false'">
+            <label for="shared" class="toggle-label"></label>
+        </div>
+    </div>
 </div>
 
 <div class="form-group">
@@ -51,6 +59,9 @@
         if (loadPluginSettings) {
             document.getElementById('url').value = pluginSettings.url;
             document.getElementById('album').value = pluginSettings.album;
+            const sharedEl = document.getElementById('shared');
+            sharedEl.checked = pluginSettings.shared === 'true';
+            sharedEl.value = sharedEl.checked ? 'true' : 'false';
             document.getElementById('padImage').checked = pluginSettings.padImage == 'false';
             document.getElementById('randomize').checked = pluginSettings.randomize;
             document.getElementById('backgroundColor').value = pluginSettings.backgroundColor;
