@@ -1,6 +1,8 @@
 from flask import Blueprint, request, jsonify, current_app, render_template, send_file
+import io
 import os
 from datetime import datetime
+from PIL import Image
 
 main_bp = Blueprint("main", __name__)
 
@@ -66,6 +68,60 @@ def get_current_display_image():
     response = send_file(image_path, mimetype='image/png')
     response.headers['Last-Modified'] = last_modified.strftime('%a, %d %b %Y %H:%M:%S GMT')
     response.headers['Cache-Control'] = 'no-cache'
+    return response
+
+
+@main_bp.route('/api/dithered_image')
+def get_dithered_image():
+    """Serve a dithered version of the display image to preview hardware colour reduction."""
+    static_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static', 'images')
+    image_path = os.path.join(static_dir, 'current_display_image.png')
+    if not os.path.exists(image_path):
+        image_path = os.path.join(static_dir, 'current_image.png')
+    if not os.path.exists(image_path):
+        return jsonify({"error": "Image not found"}), 404
+
+    device_config = current_app.config['DEVICE_CONFIG']
+    display_type = device_config.get_config("display_type") or "mock"
+
+    # Named palettes: list of (R, G, B) tuples
+    PALETTES = {
+        "bw":    [(0,0,0), (255,255,255)],
+        "bwr":   [(0,0,0), (255,255,255), (255,0,0)],
+        "bwy":   [(0,0,0), (255,255,255), (255,255,0)],
+        "inky7": [(0,0,0), (255,255,255), (0,255,0), (0,0,255),
+                  (255,0,0), (255,255,0), (255,140,0)],
+    }
+
+    # Pick palette based on display type (can be overridden via ?palette=)
+    if display_type == "inky":
+        default_palette = "inky7"
+    else:
+        default_palette = "bw"
+
+    palette_key = request.args.get("palette", default_palette)
+    colors = PALETTES.get(palette_key, PALETTES["bw"])
+
+    image = Image.open(image_path).convert("RGB")
+
+    palette_data = []
+    for c in colors:
+        palette_data.extend(c)
+    palette_data += [0] * (256 * 3 - len(palette_data))
+
+    palette_img = Image.new("P", (1, 1))
+    palette_img.putpalette(palette_data)
+
+    dithered = image.quantize(palette=palette_img, dither=Image.Dither.FLOYDSTEINBERG)
+    result = dithered.convert("RGB")
+
+    buf = io.BytesIO()
+    result.save(buf, format="PNG")
+    buf.seek(0)
+
+    response = send_file(buf, mimetype="image/png")
+    response.headers["X-Palette"] = palette_key
+    response.headers["Cache-Control"] = "no-store"
     return response
 
 
