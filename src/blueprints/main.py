@@ -89,6 +89,12 @@ def get_dithered_image():
         "bw":    [(0,0,0), (255,255,255)],
         "bwr":   [(0,0,0), (255,255,255), (255,0,0)],
         "bwy":   [(0,0,0), (255,255,255), (255,255,0)],
+        # Waveshare Spectra 6 / ACeP 6-colour (epd7in3e and similar)
+        "ws6":   [(0,0,0), (255,255,255), (0,255,0), (0,0,255),
+                  (255,0,0), (255,255,0)],
+        # Waveshare ACeP 7-colour (epd7in3f, epd5in65f, etc.)
+        "ws7":   [(0,0,0), (255,255,255), (0,255,0), (0,0,255),
+                  (255,0,0), (255,255,0), (255,140,0)],
         "inky7": [(0,0,0), (255,255,255), (0,255,0), (0,0,255),
                   (255,0,0), (255,255,0), (255,140,0)],
     }
@@ -96,6 +102,11 @@ def get_dithered_image():
     # Pick palette based on display type (can be overridden via ?palette=)
     if display_type == "inky":
         default_palette = "inky7"
+    elif display_type == "epd7in3e":
+        default_palette = "ws6"
+    elif "in" in display_type and display_type.endswith("f"):
+        # ACeP 7-colour models end in 'f' (epd7in3f, epd5in65f, etc.)
+        default_palette = "ws7"
     else:
         default_palette = "bw"
 

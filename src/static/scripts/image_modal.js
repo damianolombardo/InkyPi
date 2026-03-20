@@ -53,6 +53,8 @@ document.addEventListener('DOMContentLoaded', function() {
             { value: 'bw',    label: 'Black & White' },
             { value: 'bwr',   label: 'Black / White / Red' },
             { value: 'bwy',   label: 'Black / White / Yellow' },
+            { value: 'ws6',   label: 'Waveshare Spectra 6' },
+            { value: 'ws7',   label: 'Waveshare ACeP 7-colour' },
             { value: 'inky7', label: 'Inky 7-colour' },
         ].forEach(({ value, label }) => {
             const opt = document.createElement('option');
