@@ -80,5 +80,8 @@ class DisplayManager:
         if self.device_config.get_config("inverted_image"): image = image.rotate(180)
         image = apply_image_enhancement(image, self.device_config.get_config("image_settings"))
 
+        # Save the processed image as it will appear on the display
+        image.save(self.device_config.current_display_image_file)
+
         # Pass to the concrete instance to render to the device.
         self.display.display_image(image, image_settings)

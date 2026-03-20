@@ -16,6 +16,9 @@ class Config:
     # File path for storing the current image being displayed
     current_image_file = os.path.join(BASE_DIR, "static", "images", "current_image.png")
 
+    # File path for storing the processed image as sent to the display
+    current_display_image_file = os.path.join(BASE_DIR, "static", "images", "current_display_image.png")
+
     # Directory path for storing plugin instance images
     plugin_image_dir = os.path.join(BASE_DIR, "static", "images", "plugins")
 

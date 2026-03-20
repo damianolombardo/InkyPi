@@ -42,6 +42,33 @@ def get_current_image():
     return response
 
 
+@main_bp.route('/api/current_display_image')
+def get_current_display_image():
+    """Serve current_display_image.png (post-processing) with conditional request support."""
+    image_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static', 'images', 'current_display_image.png')
+
+    if not os.path.exists(image_path):
+        # Fall back to the unprocessed image if the display image doesn't exist yet
+        return get_current_image()
+
+    file_mtime = int(os.path.getmtime(image_path))
+    last_modified = datetime.fromtimestamp(file_mtime)
+
+    if_modified_since = request.headers.get('If-Modified-Since')
+    if if_modified_since:
+        try:
+            client_mtime = datetime.strptime(if_modified_since, '%a, %d %b %Y %H:%M:%S %Z')
+            if file_mtime <= int(client_mtime.timestamp()):
+                return '', 304
+        except (ValueError, AttributeError):
+            pass
+
+    response = send_file(image_path, mimetype='image/png')
+    response.headers['Last-Modified'] = last_modified.strftime('%a, %d %b %Y %H:%M:%S GMT')
+    response.headers['Cache-Control'] = 'no-cache'
+    return response
+
+
 @main_bp.route('/api/plugin_order', methods=['POST'])
 def save_plugin_order():
     """Save the custom plugin order."""
