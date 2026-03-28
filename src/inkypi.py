@@ -5,6 +5,7 @@ import os, logging.config
 
 from pi_heif import register_heif_opener
 
+os.makedirs(os.path.join(os.path.dirname(__file__), 'logs'), exist_ok=True)
 logging.config.fileConfig(os.path.join(os.path.dirname(__file__), 'config', 'logging.conf'))
 
 # suppress warning from inky library https://github.com/pimoroni/inky/issues/205

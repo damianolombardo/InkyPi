@@ -69,6 +69,8 @@ def save_settings():
         }
         if "inky_saturation" in form_data:
             settings["image_settings"]["inky_saturation"] = float(form_data.get("inky_saturation", "0.5"))
+        if "waveshare_clear_interval" in form_data:
+            settings["waveshare_clear_interval"] = int(form_data.get("waveshare_clear_interval", "10"))
         device_config.update_config(settings)
 
         if plugin_cycle_interval_seconds != previous_interval_seconds:

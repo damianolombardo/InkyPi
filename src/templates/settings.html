@@ -271,6 +271,21 @@
                             />
                         </div>
                         {% endif %}
+                        {% if device_settings.get('display_type', '') is not none and device_settings.get('display_type', '')|string is match("epd.*in.*") %}
+                        <div class="form-group">
+                            <label for="waveshare_clear_interval" class="form-label" style="min-width: 100px;">Screen Clear Interval:</label>
+                            <input
+                                type="number"
+                                id="waveshare_clear_interval"
+                                name="waveshare_clear_interval"
+                                class="form-input"
+                                min="0" max="100" step="1"
+                                value="{{ device_settings.get('waveshare_clear_interval', 10) }}"
+                                style="max-width: 80px;"
+                            />
+                            <span class="form-hint" style="margin-left: 8px; color: #888;">refreshes between full clears (0 = never, 1 = always). Lower = less ghosting, more flashing.</span>
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>

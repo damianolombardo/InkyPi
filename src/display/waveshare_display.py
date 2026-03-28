@@ -89,6 +89,7 @@ class WaveshareDisplay(AbstractDisplay):
             raise ValueError(f"Display does not support required methods: {display_type}")
 
         self.bi_color_display = len(display_args_spec.args) > 2
+        self.refresh_count = 0
 
         # update the resolution directly from the loaded device context
         if not self.device_config.get_config("resolution"):
@@ -123,8 +124,14 @@ class WaveshareDisplay(AbstractDisplay):
         # Assume device was in sleep mode.
         self.epd_display_init()
 
-        # Clear residual pixels before updating the image.
-        self.epd_display.Clear()
+        # Clear residual pixels periodically to prevent ghosting.
+        # Full clear on every refresh doubles update time (flash to white then draw).
+        # Default: clear every 10 refreshes; set to 1 to always clear, 0 to never clear.
+        clear_interval = self.device_config.get_config("waveshare_clear_interval", default=10)
+        self.refresh_count += 1
+        if clear_interval > 0 and (self.refresh_count % clear_interval == 1):
+            logger.info(f"Clearing display (refresh #{self.refresh_count}, interval={clear_interval})")
+            self.epd_display.Clear()
 
         # Display the image on the WS display.
         if not self.bi_color_display:
