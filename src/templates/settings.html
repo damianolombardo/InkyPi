@@ -271,7 +271,8 @@
                             />
                         </div>
                         {% endif %}
-                        {% if device_settings.get('display_type', '') is not none and device_settings.get('display_type', '')|string is match("epd.*in.*") %}
+                        {% set _dt = device_settings.get('display_type', '') %}
+{% if _dt and _dt.startswith('epd') and 'in' in _dt %}
                         <div class="form-group">
                             <label for="waveshare_clear_interval" class="form-label" style="min-width: 100px;">Screen Clear Interval:</label>
                             <input
