@@ -5,12 +5,14 @@
 # Description: This script automates the installation of InkyPI and creation of
 #              the InkyPI service.
 #
-# Usage: ./install.sh [-W <waveshare_device>]
+# Usage: ./install.sh [-W <waveshare_device>] [-P]
 #        -W <waveshare_device> (optional) Install for a Waveshare device,
 #                               specifying the device model type, e.g. epd7in3e.
 #
 #                               If not specified then the Pimoroni Inky display
 #                               is assumed.
+#        -P                    (optional) RPi Zero PhotoPainter variant of the
+#                               epd7in3e. Patches the driver to use PWR_PIN = 27.
 # =============================================================================
 
 # Formatting stuff
@@ -47,13 +49,17 @@ PIP_REQUIREMENTS_FILE="$SCRIPT_DIR/requirements.txt"
 # as per the WS naming convention.
 WS_TYPE=""
 WS_REQUIREMENTS_FILE="$SCRIPT_DIR/ws-requirements.txt"
+PHOTO_PAINTER=false
 
 # Parse the arguments, looking for the -W option.
 parse_arguments() {
-    while getopts ":W:" opt; do
+    while getopts ":W:P" opt; do
         case $opt in
             W) WS_TYPE=$OPTARG
                 echo "Optional parameter WS is set for Waveshare support.  Screen type is: $WS_TYPE"
+                ;;
+            P) PHOTO_PAINTER=true
+                echo "Optional parameter P is set for RPi Zero PhotoPainter variant."
                 ;;
             \?) echo "Invalid option: -$OPTARG." >&2
                 exit 1
@@ -101,6 +107,16 @@ fetch_waveshare_driver() {
   else
     echo_error "ERROR: Failed to download Waveshare epdconfig file."
     exit 1
+  fi
+
+  if [[ "$PHOTO_PAINTER" == true ]]; then
+    if [[ "$WS_TYPE" != "epd7in3e" ]]; then
+      echo_error "ERROR: -P (PhotoPainter) flag is only valid with -W epd7in3e."
+      exit 1
+    fi
+    echo "Patching PWR_PIN = 27 for RPi Zero PhotoPainter variant."
+    sed -i 's/PWR_PIN\s*=\s*[0-9]*/PWR_PIN = 27/' "$DRIVER_FILE"
+    echo_success "\tPatched PWR_PIN to 27 in $DRIVER_FILE"
   fi
 }
 
