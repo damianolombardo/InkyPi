@@ -17,6 +17,10 @@ import os
 
 logger = logging.getLogger(__name__)
 
+# Reject images larger than this to prevent OOM on low-RAM devices.
+# 25MP is far beyond any e-ink display resolution while still allowing high-quality sources.
+MAX_IMAGE_PIXELS = 25_000_000
+
 
 def _is_low_resource_device():
     """
@@ -128,6 +132,10 @@ class AdaptiveImageLoader:
             original_pixels = original_size[0] * original_size[1]
             logger.info(f"Loaded image: {original_size[0]}x{original_size[1]} ({img.mode} mode, {original_pixels/1_000_000:.1f}MP)")
 
+            if original_pixels > MAX_IMAGE_PIXELS:
+                logger.error(f"Image too large ({original_pixels/1_000_000:.1f}MP > {MAX_IMAGE_PIXELS/1_000_000:.0f}MP limit), refusing to decode")
+                return None
+
             if resize:
                 img = self._process_and_resize(img, dimensions, original_size)
             else:
@@ -194,6 +202,10 @@ class AdaptiveImageLoader:
             original_size = img.size
             original_pixels = original_size[0] * original_size[1]
             logger.info(f"Loaded image: {original_size[0]}x{original_size[1]} ({img.mode} mode, {original_pixels/1_000_000:.1f}MP)")
+
+            if original_pixels > MAX_IMAGE_PIXELS:
+                logger.error(f"Image too large ({original_pixels/1_000_000:.1f}MP > {MAX_IMAGE_PIXELS/1_000_000:.0f}MP limit), refusing to decode")
+                return None
 
             if resize:
                 # Apply draft mode for massive memory savings during decode
@@ -265,6 +277,10 @@ class AdaptiveImageLoader:
             original_size = img.size
             original_pixels = original_size[0] * original_size[1]
             logger.info(f"Loaded image: {original_size[0]}x{original_size[1]} ({img.mode} mode, {original_pixels/1_000_000:.1f}MP)")
+
+            if original_pixels > MAX_IMAGE_PIXELS:
+                logger.error(f"Image too large ({original_pixels/1_000_000:.1f}MP > {MAX_IMAGE_PIXELS/1_000_000:.0f}MP limit), refusing to decode")
+                return None
 
             if resize:
                 img = self._process_and_resize(img, dimensions, original_size)

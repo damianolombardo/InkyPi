@@ -65,7 +65,7 @@ class Apod(BasePlugin):
             logger.warning(f"APOD media type is '{data.get('media_type')}', not 'image'")
             raise RuntimeError("APOD is not an image today.")
 
-        image_url = data.get("hdurl") or data.get("url")
+        image_url = data.get("url") or data.get("hdurl")
         logger.info(f"APOD image URL: {image_url}")
         logger.debug(f"Using {'HD URL' if data.get('hdurl') else 'standard URL'}")
 
